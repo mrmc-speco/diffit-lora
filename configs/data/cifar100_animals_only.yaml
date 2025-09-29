@@ -1,0 +1,47 @@
+# CIFAR-100 Animals Only Configuration
+# Example of class filtering for fine-tuning on animal classes only
+
+data:
+  name: "CIFAR100"
+  dataset_name: "cifar100"
+  
+  # Image properties
+  img_size: 32
+  channels: 3
+  num_classes: 40  # Updated to reflect filtered classes
+  
+  # Class filtering - Animals only
+  class_filter:
+    enabled: true
+    # Using predefined group "animals" (40 animal classes)
+    classes: "animals"
+    filtered_num_classes: 40
+  
+  # Data loading
+  batch_size_train: 64
+  batch_size_test: 16
+  num_workers: 2
+  pin_memory: true
+  drop_last: true
+  persistent_workers: true
+  
+  # Preprocessing
+  normalization:
+    mean: [0.5, 0.5, 0.5]
+    std: [0.5, 0.5, 0.5]  # Normalize to [-1, 1] range
+  
+  # Data augmentation
+  augmentation:
+    enabled: true  # Enabled for fine-tuning
+    transforms:
+      - type: "RandomHorizontalFlip"
+        p: 0.5
+      - type: "RandomRotation"
+        degrees: 5
+  
+  # Dataset splits
+  train_split: 0.9
+  val_split: 0.1
+  
+  # Cache settings
+  cache_dir: "./data/cifar100_animals/"

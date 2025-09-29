@@ -1,0 +1,52 @@
+# CIFAR-100 Dataset Configuration
+# Similar structure to CIFAR-10 but with 100 classes
+
+data:
+  name: "CIFAR100"
+  dataset_name: "cifar100"
+  
+  # Image properties
+  img_size: 32
+  channels: 3
+  num_classes: 100
+  
+  # Class filtering (optional)
+  # If specified, only these classes will be used for training
+  # Can be class indices (0-99) or class names
+  class_filter:
+    enabled: True
+    # Example: filter to animals only
+    # classes: [2, 3, 4, 5, 6, 7, 14, 15, 18, 19, 22, 23, 26, 27, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]
+    # Or specify by superclass: "animals", "vehicles", "household", "food", "nature"
+    classes: []
+    # If using class filtering, update num_classes to match
+    filtered_num_classes: null
+  
+  # Data loading
+  batch_size_train: 64
+  batch_size_test: 16
+  num_workers: 2
+  pin_memory: true
+  drop_last: true
+  persistent_workers: true
+  
+  # Preprocessing
+  normalization:
+    mean: [0.5, 0.5, 0.5]
+    std: [0.5, 0.5, 0.5]  # Normalize to [-1, 1] range
+  
+  # Data augmentation
+  augmentation:
+    enabled: false
+    transforms:
+      - type: "RandomHorizontalFlip"
+        p: 0.5
+      - type: "RandomRotation"
+        degrees: 5
+  
+  # Dataset splits
+  train_split: 0.9
+  val_split: 0.1
+  
+  # Cache settings
+  cache_dir: "./data/cifar100/"

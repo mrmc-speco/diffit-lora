@@ -895,6 +895,75 @@ def get_cifar_dataset():
 
     return train_data, val_data
 
+def get_cifar100_dataset(target_classes=None):
+    """
+    Load CIFAR-100 dataset with fine-tuning optimized preprocessing and optional class filtering
+    
+    Args:
+        target_classes: List of class indices to keep, or None for all classes
+    """
+    dataset = load_dataset("cifar100")
+
+    if target_classes is not None:
+        print(f"🎯 Filtering CIFAR-100 to classes: {target_classes}")
+
+    # Enhanced preprocessing for fine-tuning
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # [-1, 1] range
+    ])
+
+    # Data augmentation for training (helps with fine-tuning)
+    train_transform = transforms.Compose([
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomRotation(degrees=5),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+    ])
+
+    train_data = []
+    val_data = []
+
+    # Process training data with augmentation
+    for item in dataset["train"]:
+        label = item["fine_label"]
+        if target_classes is None or label in target_classes:
+            img_tensor = train_transform(item["img"])
+            train_data.append(img_tensor)
+
+    # Process test data (validation) without augmentation
+    for item in dataset["test"]:
+        label = item["fine_label"]
+        if target_classes is None or label in target_classes:
+            img_tensor = transform(item["img"])
+            val_data.append(img_tensor)
+
+    if target_classes is not None:
+        print(f"✅ Filtered dataset: {len(train_data)} train, {len(val_data)} test samples")
+
+    # Split train data for validation if needed
+    train_size = int(0.9 * len(train_data))
+    val_size = len(train_data) - train_size
+
+    if val_size > 0:
+        train_split, val_split = torch.utils.data.random_split(
+            train_data, [train_size, val_size],
+            generator=torch.Generator().manual_seed(42)
+        )
+        train_data = list(train_split)
+        val_data.extend(list(val_split))
+
+    return train_data, val_data
+
+def get_dataset(dataset_name="cifar10"):
+    """Generic dataset loader for different datasets"""
+    if dataset_name.lower() == "cifar10":
+        return get_cifar_dataset()
+    elif dataset_name.lower() == "cifar100":
+        return get_cifar100_dataset()
+    else:
+        raise ValueError(f"Unsupported dataset: {dataset_name}")
+
 def create_dataloaders(train_data, val_data, config):
     """Create optimized dataloaders for fine-tuning"""
 

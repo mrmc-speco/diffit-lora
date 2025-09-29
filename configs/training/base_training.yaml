@@ -6,7 +6,7 @@ training:
   model_config: "configs/models/unet_config.yaml"
   
   # Dataset configuration
-  dataset: "CIFAR"  # Options: "CIFAR", "IMAGENETTE"
+  dataset: "CIFAR"  # Options: "CIFAR", "CIFAR100", "IMAGENETTE"
   
   # Training hyperparameters
   num_epochs: 3

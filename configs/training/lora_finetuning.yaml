@@ -7,7 +7,8 @@ training:
   lora_config: "configs/lora/blockwise_config.yaml"
   
   # Dataset configuration
-  dataset: "CIFAR"  # Target domain for fine-tuning
+  dataset: "CIFAR100"  # Target domain for fine-tuning. Options: "CIFAR", "CIFAR100", "IMAGENETTE"
+  data_config: "configs/data/cifar100_trees_only.yaml"  # Trees-only fine-tuning
   
   # Fine-tuning hyperparameters (FIXED for stability)
   num_epochs: 5
@@ -34,9 +35,9 @@ training:
   log_every_n_steps: 50
   
   # Paths
-  pretrained_path: "/content/best_model.ckpt"
-  output_dir: "./weights/lora_finetuned/"
-  experiment_name: "diffit_lora_finetuning"
+  pretrained_path: "checkpoints/base/base_model_last.ckpt"  # Updated to use local checkpoint
+  output_dir: "./checkpoints/lora_finetuned_trees/"
+  experiment_name: "diffit_lora_trees_finetuning"
   
   # Transfer learning settings
   freeze_base_model: true

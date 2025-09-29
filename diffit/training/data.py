@@ -10,6 +10,7 @@ import pytorch_lightning as pl
 from datasets import load_dataset
 from torchvision import transforms
 from typing import Optional, List, Dict, Any
+from ..utils.cifar100_classes import get_class_indices, filter_dataset_by_classes, get_class_info
 
 
 class DiffiTDataModule(pl.LightningDataModule):
@@ -59,6 +60,8 @@ class DiffiTDataModule(pl.LightningDataModule):
         """Download datasets if needed"""
         if self.dataset_name == "CIFAR":
             load_dataset("cifar10")
+        elif self.dataset_name == "CIFAR100":
+            load_dataset("cifar100")
         elif self.dataset_name == "IMAGENETTE":
             load_dataset("frgfm/imagenette", "160px")
     
@@ -66,6 +69,8 @@ class DiffiTDataModule(pl.LightningDataModule):
         """Setup datasets for training/validation/testing"""
         if self.dataset_name == "CIFAR":
             self.train_data, self.val_data = self._get_cifar_ds()
+        elif self.dataset_name == "CIFAR100":
+            self.train_data, self.val_data = self._get_cifar100_ds()
         elif self.dataset_name == "IMAGENETTE":
             self.train_data, self.val_data = self._get_imagenette_ds()
         else:
@@ -91,6 +96,80 @@ class DiffiTDataModule(pl.LightningDataModule):
         for image in test:
             image_tensor = self.base_transform(image["img"])
             test_tensor.append(image_tensor)
+
+        # Split train data for validation if needed
+        val_split = self.data_config.get('val_split', 0.1)
+        if val_split > 0:
+            train_size = int((1 - val_split) * len(train_tensor))
+            val_size = len(train_tensor) - train_size
+
+            train_split, val_split = random_split(
+                train_tensor, [train_size, val_size],
+                generator=torch.Generator().manual_seed(42)
+            )
+            train_data = list(train_split)
+            val_data = list(val_split) + test_tensor
+        else:
+            train_data = train_tensor
+            val_data = test_tensor
+
+        return train_data, val_data
+    
+    def _get_cifar100_ds(self):
+        """
+        Load CIFAR-100 dataset with optional class filtering
+        
+        Similar to CIFAR-10 but with 100 classes instead of 10
+        """
+        dataset = load_dataset("cifar100")
+
+        train = dataset["train"]
+        test = dataset["test"]
+
+        # Check for class filtering
+        class_filter_config = self.data_config.get('class_filter', {})
+        filter_enabled = class_filter_config.get('enabled', False)
+        target_classes = None
+        
+        if filter_enabled:
+            class_spec = class_filter_config.get('classes', [])
+            if class_spec:
+                target_classes = get_class_indices(class_spec)
+                if target_classes:
+                    print(f"🎯 Filtering CIFAR-100 to {len(target_classes)} classes")
+                    class_info = get_class_info(target_classes)
+                    print(f"   Selected classes: {[c['name'] for c in class_info['classes'][:10]]}{'...' if len(class_info['classes']) > 10 else ''}")
+                    print(f"   Superclasses: {list(class_info['superclasses'])}")
+
+        train_tensor = []
+        train_labels = []
+        for image in train:
+            label = image["fine_label"]  # CIFAR-100 uses "fine_label"
+            
+            # Apply class filtering if enabled
+            if target_classes is None or label in target_classes:
+                image_tensor = self.train_transform(image["img"])
+                train_tensor.append(image_tensor)
+                train_labels.append(label)
+
+        test_tensor = []
+        test_labels = []
+        for image in test:
+            label = image["fine_label"]
+            
+            # Apply class filtering if enabled
+            if target_classes is None or label in target_classes:
+                image_tensor = self.base_transform(image["img"])
+                test_tensor.append(image_tensor)
+                test_labels.append(label)
+
+        # For diffusion models, we typically don't need labels during training
+        # But store them for potential future use
+        self.train_labels = train_labels
+        self.test_labels = test_labels
+        
+        if filter_enabled and target_classes:
+            print(f"✅ Filtered dataset: {len(train_tensor)} train, {len(test_tensor)} test samples")
 
         # Split train data for validation if needed
         val_split = self.data_config.get('val_split', 0.1)

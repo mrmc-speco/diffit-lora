@@ -657,6 +657,41 @@ def get_cifar_ds():
 
     return train_tensor, test_tensor
 
+def get_cifar100_ds(target_classes=None):
+    """
+    Load and preprocess CIFAR-100 dataset with optional class filtering
+    
+    Args:
+        target_classes: List of class indices to keep, or None for all classes
+    """
+    dataset = load_dataset("cifar100")
+
+    train = dataset["train"]
+    test = dataset["test"]
+
+    if target_classes is not None:
+        print(f"🎯 Filtering CIFAR-100 to classes: {target_classes}")
+
+    train_tensor = []
+    trans = transforms.ToTensor()
+    for image in train:
+        label = image["fine_label"]
+        if target_classes is None or label in target_classes:
+            image_tensor = trans(image["img"])
+            train_tensor.append(image_tensor)
+
+    test_tensor = []
+    for image in test:
+        label = image["fine_label"]
+        if target_classes is None or label in target_classes:
+            image_tensor = trans(image["img"])
+            test_tensor.append(image_tensor)
+
+    if target_classes is not None:
+        print(f"✅ Filtered dataset: {len(train_tensor)} train, {len(test_tensor)} test samples")
+
+    return train_tensor, test_tensor
+
 def get_imagenette_ds():
     """Load and preprocess Imagenette dataset"""
     dataset = load_dataset("frgfm/imagenette", "160px")
@@ -687,6 +722,8 @@ def get_ds(ds_name: str):
     """Get dataset by name"""
     if ds_name == "CIFAR":
         return get_cifar_ds()
+    elif ds_name == "CIFAR100":
+        return get_cifar100_ds()
     elif ds_name == "IMAGENETTE":
         return get_imagenette_ds()
     else:

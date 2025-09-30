@@ -1,5 +1,5 @@
 # Base Training Configuration for DiffiT
-# EXACT preservation of original training hyperparameters
+# With checkpoint management for resumable training
 
 training:
   # Model configuration
@@ -32,8 +32,20 @@ training:
   log_every_n_steps: 25
   
   # Paths
-  output_dir: "./weights/ImageSpaceWeights/"
+  output_dir: "./checkpoints/base/"
   experiment_name: "diffit_base_training"
+  
+  # Checkpoint Management for Base Model Training
+  checkpoint:
+    enabled: true
+    base_dir: "checkpoints/base_training"
+    run_number: null  # Auto-increment if null
+    save_every_n_epochs: 1
+    keep_last_n: 3  # Keep last 3 checkpoints
+    monitor: "train_loss"
+    mode: "min"
+    resume_from_run: null  # Run number to resume from (null for new run)
+    resume_checkpoint: null  # Specific checkpoint path to resume from
   
 # Data preprocessing
 data:

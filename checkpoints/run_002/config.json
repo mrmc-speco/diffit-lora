@@ -1,0 +1,14 @@
+{
+  "training": {
+    "epochs": 5,
+    "batch_size": 32,
+    "learning_rate": 0.0005,
+    "dataset": "CIFAR-100 Trees Only",
+    "base_model": "checkpoints/base/base_model_last.ckpt"
+  },
+  "lora": {
+    "enabled": true,
+    "rank": 8,
+    "alpha": 16
+  }
+}

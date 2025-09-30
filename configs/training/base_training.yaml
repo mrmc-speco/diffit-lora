@@ -9,7 +9,7 @@ training:
   dataset: "CIFAR"  # Options: "CIFAR", "CIFAR100", "IMAGENETTE"
   
   # Training hyperparameters
-  num_epochs: 3
+  num_epochs: 20
   batch_size_train: 64
   batch_size_test: 16
   learning_rate: 0.001

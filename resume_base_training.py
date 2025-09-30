@@ -112,16 +112,29 @@ def main():
     print("\nThe ResumeCallback will automatically load the checkpoint")
     print("when training starts!")
     
-    # TODO: Initialize your model here
+    # Initialize your model with all required parameters
     from diffit.models.unet import UShapedNetwork
+    import torch
+    
+    # Determine device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     model = UShapedNetwork(
+        learning_rate=training_config.get('learning_rate', 0.001),
         d_model=128,
         num_heads=2,
+        dropout=0.1,
+        d_ff=256,
         img_size=32,
-        learning_rate=training_config.get('learning_rate', 0.001)
+        device=device,
+        denoising_steps=500
     )
     
-    # Uncomment this when your model is ready:
+    print(f"\n✅ Model initialized:")
+    print(f"   Device: {device}")
+    print(f"   Parameters: {sum(p.numel() for p in model.parameters()):,}")
+    
+    # Start training
     trainer.fit(model, datamodule=data_module)
     
     print(f"\n💡 After training completes, new checkpoints will be in:")

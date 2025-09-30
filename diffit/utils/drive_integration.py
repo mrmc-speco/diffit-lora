@@ -16,9 +16,9 @@ try:
 except ImportError:
     COLAB_AVAILABLE = False
 
-from .logging import setup_logging
+from .logging import get_logger
 
-logger = setup_logging(__name__)
+logger = get_logger(__name__)
 
 
 class CheckpointManager:

@@ -113,16 +113,16 @@ def main():
     print("when training starts!")
     
     # TODO: Initialize your model here
-    # from diffit.models.unet import UShapedNetwork
-    # model = UShapedNetwork(
-    #     d_model=128,
-    #     num_heads=2,
-    #     img_size=32,
-    #     learning_rate=training_config.get('learning_rate', 0.001)
-    # )
+    from diffit.models.unet import UShapedNetwork
+    model = UShapedNetwork(
+        d_model=128,
+        num_heads=2,
+        img_size=32,
+        learning_rate=training_config.get('learning_rate', 0.001)
+    )
     
     # Uncomment this when your model is ready:
-    # trainer.fit(model, datamodule=data_module)
+    trainer.fit(model, datamodule=data_module)
     
     print(f"\n💡 After training completes, new checkpoints will be in:")
     print(f"   {checkpoint_callback.run_dir}")

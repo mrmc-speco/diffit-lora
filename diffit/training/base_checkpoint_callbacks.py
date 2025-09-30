@@ -79,6 +79,15 @@ class BaseModelCheckpointCallback(Callback):
         self.metadata = self._load_or_create_metadata()
         
         self.best_metric = float('inf') if mode == 'min' else float('-inf')
+        
+        # Track starting epoch for resume scenarios
+        self.starting_epoch = 0
+    
+    def set_starting_epoch(self, epoch: int):
+        """Set the starting epoch for resume scenarios."""
+        self.starting_epoch = epoch
+        if self.verbose:
+            print(f"📊 Starting epoch set to: {epoch}")
     
     def _get_next_run_number(self) -> int:
         """Get the next available run number."""
@@ -166,9 +175,12 @@ class BaseModelCheckpointCallback(Callback):
         if len(trainer.lr_scheduler_configs) > 0:
             scheduler_state = trainer.lr_scheduler_configs[0].scheduler.state_dict()
         
+        # Calculate total epoch (including previously trained epochs)
+        total_epoch = current_epoch + 1 + self.starting_epoch
+        
         # Create checkpoint
         checkpoint = {
-            'epoch': current_epoch + 1,
+            'epoch': total_epoch,
             'state_dict': pl_module.state_dict(),
             'metrics': metrics,
             'optimizer_state_dict': optimizer_state,
@@ -177,7 +189,7 @@ class BaseModelCheckpointCallback(Callback):
         }
         
         # Save epoch checkpoint
-        epoch_path = self.checkpoint_dir / f"epoch_{current_epoch + 1:03d}.ckpt"
+        epoch_path = self.checkpoint_dir / f"epoch_{total_epoch:03d}.ckpt"
         torch.save(checkpoint, epoch_path)
         
         if self.verbose:
@@ -198,7 +210,7 @@ class BaseModelCheckpointCallback(Callback):
             best_path = self.checkpoint_dir / "best.ckpt"
             torch.save(checkpoint, best_path)
             self.metadata['best_checkpoint'] = {
-                'epoch': current_epoch + 1,
+                'epoch': total_epoch,
                 'path': str(best_path),
                 'metrics': metrics
             }
@@ -329,9 +341,8 @@ class ResumeBaseModelCallback(Callback):
                         checkpoint['scheduler_state_dict']
                     )
             
-            # Set starting epoch
-            if 'epoch' in checkpoint:
-                trainer.fit_loop.epoch_loop._batches_that_stepped = checkpoint['epoch']
+            # Set starting epoch - this is handled automatically by PyTorch Lightning
+            # when using trainer.fit() with ckpt_path parameter
             
             if self.verbose:
                 print(f"✅ Resumed from epoch {checkpoint.get('epoch', 'unknown')}")

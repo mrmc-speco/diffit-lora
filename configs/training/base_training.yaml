@@ -18,7 +18,7 @@ training:
   # Optimization
   optimizer: "Adam"
   scheduler: null
-  gradient_clip_val: 1.0
+  gradient_clip_val: 1.0 # was 1.0 effect: too high, causing overflow
   
   # PyTorch Lightning trainer settings
   accelerator: "auto"

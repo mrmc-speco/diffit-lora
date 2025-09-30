@@ -54,18 +54,10 @@ def main():
         verbose=True
     )
     
-    # Setup resume callback to load existing checkpoint
-    resume_callback = ResumeBaseModelCallback(
-        checkpoint_path=existing_checkpoint,
-        load_optimizer=True,  # Load optimizer state if available
-        load_scheduler=True,  # Load scheduler state if available
-        verbose=True
-    )
-    
     # Learning rate monitor
     lr_monitor = LearningRateMonitor(logging_interval='step')
     
-    callbacks = [checkpoint_callback, resume_callback, lr_monitor]
+    callbacks = [checkpoint_callback, lr_monitor]
     
     # Load dataset
     dataset_name = training_config.get('dataset', 'CIFAR')
@@ -134,8 +126,16 @@ def main():
     print(f"   Device: {device}")
     print(f"   Parameters: {sum(p.numel() for p in model.parameters()):,}")
     
-    # Start training
-    trainer.fit(model, datamodule=data_module)
+    # Get starting epoch from checkpoint
+    import torch
+    checkpoint = torch.load(existing_checkpoint, map_location='cpu')
+    starting_epoch = checkpoint.get('epoch', 0)
+    checkpoint_callback.set_starting_epoch(starting_epoch)
+    
+    print(f"📊 Will continue from epoch {starting_epoch + 1}")
+    
+    # Start training with proper resume
+    trainer.fit(model, datamodule=data_module, ckpt_path=existing_checkpoint)
     
     print(f"\n💡 After training completes, new checkpoints will be in:")
     print(f"   {checkpoint_callback.run_dir}")

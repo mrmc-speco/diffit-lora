@@ -132,9 +132,23 @@ def main():
     starting_epoch = checkpoint.get('epoch', 0)
     checkpoint_callback.set_starting_epoch(starting_epoch)
     
-    # Fix checkpoint compatibility by adding missing PyTorch Lightning version
+    # Fix checkpoint compatibility by adding missing PyTorch Lightning version and optimizer states
+    checkpoint_fixed = False
+    
     if 'pytorch-lightning_version' not in checkpoint:
         checkpoint['pytorch-lightning_version'] = pl.__version__
+        checkpoint_fixed = True
+    
+    # Add empty optimizer and scheduler states if missing (for weights-only checkpoints)
+    if 'optimizer_states' not in checkpoint:
+        checkpoint['optimizer_states'] = []
+        checkpoint['lr_schedulers'] = []
+        checkpoint['optimizer_state_dict'] = None
+        checkpoint['scheduler_state_dict'] = None
+        checkpoint_fixed = True
+        print("🔧 Added missing optimizer/scheduler states (weights-only checkpoint)")
+    
+    if checkpoint_fixed:
         # Save the fixed checkpoint to a temporary location
         fixed_checkpoint_path = "temp_fixed_checkpoint.ckpt"
         torch.save(checkpoint, fixed_checkpoint_path)

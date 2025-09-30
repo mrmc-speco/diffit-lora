@@ -19,6 +19,7 @@ from diffit.training.base_checkpoint_callbacks import (
 from diffit.training.data import DiffiTDataModule
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import LearningRateMonitor
+import torch
 
 
 def main():
@@ -106,7 +107,6 @@ def main():
     
     # Initialize your model with all required parameters
     from diffit.models.unet import UShapedNetwork
-    import torch
     
     # Determine device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -127,8 +127,6 @@ def main():
     print(f"   Parameters: {sum(p.numel() for p in model.parameters()):,}")
     
     # Get starting epoch from checkpoint and fix version compatibility
-    import torch
-    import pytorch_lightning as pl
     
     checkpoint = torch.load(existing_checkpoint, map_location='cpu')
     starting_epoch = checkpoint.get('epoch', 0)

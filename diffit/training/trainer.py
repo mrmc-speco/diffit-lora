@@ -12,6 +12,7 @@ from ..models import UShapedNetwork
 # from ..models import LatentDiffiTNetwork  # TODO: Implement when needed
 from ..lora import inject_blockwise_lora
 from ..utils import load_config, get_device
+from ..utils.drive_integration import CheckpointManager
 from .data import DiffiTDataModule
 from .callbacks import setup_callbacks, setup_logger
 
@@ -32,6 +33,10 @@ class DiffiTTrainer:
         """
         self.config = load_config(config_path)
         self.device = get_device(self.config.get('device'))
+        
+        # Setup checkpoint manager
+        project_name = self.config.get('project_name', 'diffit-lora')
+        self.checkpoint_manager = CheckpointManager(project_name=project_name)
         
         # Setup components
         self.setup_model()
@@ -188,3 +193,88 @@ class LoRAFineTuner(DiffiTTrainer):
         from ..lora import fuse_all_lora
         fuse_all_lora(self.model)
         print("🔗 LoRA weights fused into base model")
+    
+    def save_checkpoint_to_drive(self, filename: str, epoch: int = None, metrics: dict = None):
+        """
+        Save checkpoint with Drive backup
+        
+        Args:
+            filename: Name for the checkpoint file
+            epoch: Current epoch (optional)
+            metrics: Training metrics (optional)
+        """
+        # Prepare checkpoint data
+        checkpoint_data = {
+            'state_dict': self.model.state_dict(),
+            'model_config': self.config,
+            'epoch': epoch,
+            'metrics': metrics or {},
+        }
+        
+        # Add LoRA-specific information if applicable
+        if hasattr(self, 'lora_stats') and self.lora_stats:
+            checkpoint_data['lora_stats'] = self.lora_stats
+            checkpoint_data['is_lora_model'] = True
+        
+        # Save with checkpoint manager
+        saved_path = self.checkpoint_manager.save_checkpoint(checkpoint_data, filename)
+        print(f"💾 Checkpoint saved: {filename}")
+        return saved_path
+    
+    def load_checkpoint_from_drive(self, filename: str, strict: bool = True):
+        """
+        Load checkpoint with Drive/local fallback
+        
+        Args:
+            filename: Name of the checkpoint file
+            strict: Whether to enforce strict state dict loading
+            
+        Returns:
+            Loaded checkpoint data or None
+        """
+        checkpoint_data = self.checkpoint_manager.load_checkpoint(filename)
+        
+        if checkpoint_data is not None:
+            try:
+                self.model.load_state_dict(checkpoint_data['state_dict'], strict=strict)
+                print(f"✅ Model state loaded from: {filename}")
+                return checkpoint_data
+            except Exception as e:
+                print(f"❌ Failed to load model state: {e}")
+                return None
+        else:
+            print(f"❌ Checkpoint not found: {filename}")
+            return None
+    
+    def list_available_checkpoints(self):
+        """List all available checkpoints"""
+        checkpoints = self.checkpoint_manager.list_checkpoints()
+        
+        print("📋 Available Checkpoints:")
+        if checkpoints['local']:
+            print("  Local:")
+            for ckpt in checkpoints['local']:
+                print(f"    - {ckpt}")
+        
+        if checkpoints['drive']:
+            print("  Google Drive:")
+            for ckpt in checkpoints['drive']:
+                print(f"    - {ckpt}")
+        
+        if not checkpoints['local'] and not checkpoints['drive']:
+            print("  No checkpoints found")
+        
+        return checkpoints
+    
+    def sync_checkpoints_with_drive(self, direction: str = "both"):
+        """
+        Sync checkpoints between Drive and local storage
+        
+        Args:
+            direction: "drive_to_local", "local_to_drive", or "both"
+        """
+        self.checkpoint_manager.sync_checkpoints(direction)
+    
+    def download_checkpoint(self, filename: str):
+        """Download checkpoint to local machine (Colab only)"""
+        self.checkpoint_manager.download_checkpoint(filename)

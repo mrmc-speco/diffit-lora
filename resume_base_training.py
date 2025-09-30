@@ -126,11 +126,22 @@ def main():
     print(f"   Device: {device}")
     print(f"   Parameters: {sum(p.numel() for p in model.parameters()):,}")
     
-    # Get starting epoch from checkpoint
+    # Get starting epoch from checkpoint and fix version compatibility
     import torch
+    import pytorch_lightning as pl
+    
     checkpoint = torch.load(existing_checkpoint, map_location='cpu')
     starting_epoch = checkpoint.get('epoch', 0)
     checkpoint_callback.set_starting_epoch(starting_epoch)
+    
+    # Fix checkpoint compatibility by adding missing PyTorch Lightning version
+    if 'pytorch-lightning_version' not in checkpoint:
+        checkpoint['pytorch-lightning_version'] = pl.__version__
+        # Save the fixed checkpoint to a temporary location
+        fixed_checkpoint_path = "temp_fixed_checkpoint.ckpt"
+        torch.save(checkpoint, fixed_checkpoint_path)
+        existing_checkpoint = fixed_checkpoint_path
+        print(f"🔧 Fixed checkpoint compatibility - saved to: {existing_checkpoint}")
     
     print(f"📊 Will continue from epoch {starting_epoch + 1}")
     
@@ -139,6 +150,14 @@ def main():
     
     print(f"\n💡 After training completes, new checkpoints will be in:")
     print(f"   {checkpoint_callback.run_dir}")
+    
+    # Clean up temporary checkpoint file if it was created
+    if existing_checkpoint == "temp_fixed_checkpoint.ckpt":
+        import os
+        if os.path.exists("temp_fixed_checkpoint.ckpt"):
+            os.remove("temp_fixed_checkpoint.ckpt")
+            print("🧹 Cleaned up temporary checkpoint file")
+    
     print(f"\n✅ Setup complete!")
 
 

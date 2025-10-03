@@ -1,0 +1,39 @@
+{
+  "run_number": 5,
+  "experiment_name": "diffit_base_resumed",
+  "created_at": "2025-09-30T15:18:40.077488",
+  "checkpoints": [
+    {
+      "epoch": 8,
+      "path": "checkpoints/base_training/run_005/checkpoints/epoch_020.ckpt",
+      "metrics": {
+        "train_loss": 0.014646130613982677
+      },
+      "saved_at": "2025-09-30T16:46:25.439632"
+    },
+    {
+      "epoch": 9,
+      "path": "checkpoints/base_training/run_005/checkpoints/epoch_021.ckpt",
+      "metrics": {
+        "train_loss": 0.022178243845701218
+      },
+      "saved_at": "2025-09-30T16:57:19.629025"
+    },
+    {
+      "epoch": 10,
+      "path": "checkpoints/base_training/run_005/checkpoints/epoch_022.ckpt",
+      "metrics": {
+        "train_loss": 0.024726733565330505
+      },
+      "saved_at": "2025-09-30T17:08:13.720235"
+    }
+  ],
+  "best_checkpoint": {
+    "epoch": 17,
+    "path": "checkpoints/base_training/run_005/checkpoints/best.ckpt",
+    "metrics": {
+      "train_loss": 0.014358943328261375
+    }
+  },
+  "training_config": {}
+}

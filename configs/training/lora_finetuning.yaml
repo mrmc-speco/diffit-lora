@@ -1,5 +1,5 @@
 # LoRA Fine-tuning Configuration for DiffiT
-# EXACT preservation of original fine-tuning hyperparameters
+# With distributed checkpoint management
 
 training:
   # Model configuration
@@ -38,6 +38,18 @@ training:
   pretrained_path: "checkpoints/base/base_model_last.ckpt"  # Updated to use local checkpoint
   output_dir: "./checkpoints/lora_finetuned_trees/"
   experiment_name: "diffit_lora_trees_finetuning"
+  
+  # Checkpoint Management (Distributed LoRA/Base)
+  checkpoint:
+    enabled: true
+    base_dir: "checkpoints"
+    run_number: null  # Auto-increment if null
+    save_every_n_epochs: 1
+    keep_last_n: 5  # Keep last 5 checkpoints
+    monitor: "val_loss"
+    mode: "min"
+    save_base_model: true  # Save base model separately
+    resume_from_run: null  # Run number to resume from (null for new run)
   
   # Transfer learning settings
   freeze_base_model: true

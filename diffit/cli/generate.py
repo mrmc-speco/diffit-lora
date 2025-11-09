@@ -15,6 +15,7 @@ from ..models import UShapedNetwork
 # from ..models import LatentDiffiTNetwork  # TODO: Implement when needed
 from ..diffusion import sample
 from ..utils import setup_logging
+from ..utils.drive_integration import CheckpointManager
 
 
 def save_images(images, output_dir: str, prefix: str = "sample"):
@@ -49,7 +50,7 @@ def main():
         "--checkpoint",
         type=str,
         required=True,
-        help="Path to model checkpoint"
+        help="Path to model checkpoint or checkpoint name (will search Drive/local)"
     )
     
     parser.add_argument(
@@ -132,6 +133,13 @@ def main():
         help="Logging level"
     )
     
+    parser.add_argument(
+        "--project-name",
+        type=str,
+        default="diffit-lora",
+        help="Project name for Google Drive organization"
+    )
+    
     args = parser.parse_args()
     
     # Setup logging
@@ -149,21 +157,39 @@ def main():
     
     print(f"🚀 Using device: {device}")
     
-    # Check checkpoint exists
-    if not os.path.exists(args.checkpoint):
-        print(f"❌ Checkpoint not found: {args.checkpoint}")
-        return 1
+    # Initialize checkpoint manager
+    checkpoint_manager = CheckpointManager(project_name=args.project_name)
     
     try:
+        # Load checkpoint using checkpoint manager
+        print(f"📥 Loading checkpoint: {args.checkpoint}")
+        
+        # Try to load as checkpoint name first, then as full path
+        checkpoint_data = None
+        if os.path.exists(args.checkpoint):
+            # Direct path provided
+            checkpoint_data = torch.load(args.checkpoint, map_location=device)
+            print(f"📥 Loaded from direct path: {args.checkpoint}")
+        else:
+            # Try loading as checkpoint name through manager
+            checkpoint_data = checkpoint_manager.load_checkpoint(args.checkpoint)
+        
+        if checkpoint_data is None:
+            print(f"❌ Checkpoint not found: {args.checkpoint}")
+            print("📋 Available checkpoints:")
+            checkpoints = checkpoint_manager.list_checkpoints()
+            if checkpoints['local']:
+                print("  Local:", ", ".join(checkpoints['local']))
+            if checkpoints['drive']:
+                print("  Drive:", ", ".join(checkpoints['drive']))
+            return 1
+        
         # Load model
-        print(f"📥 Loading model from {args.checkpoint}")
+        print(f"🤖 Setting up model...")
         
         if args.model_type == "image-space":
-            # Load checkpoint and extract hyperparameters
-            checkpoint = torch.load(args.checkpoint, map_location=device)
-            
-            # Get state dict
-            state_dict = checkpoint.get('state_dict', checkpoint)
+            # Get state dict from loaded checkpoint
+            state_dict = checkpoint_data.get('state_dict', checkpoint_data)
             
             # Check if this is a LoRA checkpoint by looking for LoRA parameters
             is_lora_checkpoint = any('lora_A' in key or 'lora_B' in key for key in state_dict.keys())

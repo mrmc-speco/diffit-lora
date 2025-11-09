@@ -1,0 +1,19 @@
+{
+  "run_number": 2,
+  "experiment_name": "diffit_lora_trees",
+  "created_at": "2025-09-30T04:54:49.294802",
+  "checkpoints": [],
+  "best_checkpoint": null,
+  "training_config": {
+    "epochs": 5,
+    "batch_size": 32,
+    "learning_rate": 0.0005,
+    "dataset": "CIFAR-100 Trees Only",
+    "base_model": "checkpoints/base/base_model_last.ckpt"
+  },
+  "lora_config": {
+    "enabled": true,
+    "rank": 8,
+    "alpha": 16
+  }
+}

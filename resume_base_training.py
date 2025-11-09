@@ -27,7 +27,7 @@ def main():
     print("=" * 60)
     
     # Your existing checkpoint
-    existing_checkpoint = "checkpoints/base/base_model_last.ckpt"
+    existing_checkpoint = "/content/drive/MyDrive/diffit-lora/checkpoints/base/base_model_last.ckpt"
     
     print(f"📥 Will resume from: {existing_checkpoint}")
     print(f"   File size: 53MB")
@@ -45,7 +45,7 @@ def main():
     
     # Setup checkpoint callback for future saves
     checkpoint_callback = BaseModelCheckpointCallback(
-        base_dir="checkpoints/base_training",
+        base_dir="/content/drive/MyDrive/diffit-lora/checkpoints/base_training",
         run_number=None,  # Will create new run
         experiment_name="diffit_base_resumed",
         monitor='train_loss',
@@ -63,11 +63,11 @@ def main():
     # Load dataset
     dataset_name = training_config.get('dataset', 'CIFAR')
     if dataset_name == 'CIFAR':
-        data_config_path = 'configs/data/cifar10.yaml'
+        data_config_path = '/content/drive/MyDrive/diffit-lora/configs/data/cifar10.yaml'
     elif dataset_name == 'CIFAR100':
-        data_config_path = 'configs/data/cifar100.yaml'
+        data_config_path = '/content/drive/MyDrive/diffit-lora/configs/data/cifar100.yaml'
     else:
-        data_config_path = f'configs/data/{dataset_name.lower()}.yaml'
+        data_config_path = f'/content/drive/MyDrive/diffit-lora/configs/data/{dataset_name.lower()}.yaml'
     
     print(f"\n📊 Loading dataset: {data_config_path}")
     
